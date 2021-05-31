@@ -1,34 +1,73 @@
 const {response} = require('express');
+const Usuario = require('../models/usuario');
+const bcrytjs = require('bcryptjs');
 
-const usuariosGet = (req, res = response) => {
+const usuariosGet = async(req, res = response) => {
 
+    const { limite = 5, desde = 0} = req.query;
+    const query = {
+        estado:true
+    }
+
+    const [total, usuarios] = await Promise.all([
+        Usuario.countDocuments(query),
+        Usuario.find(query)
+        .skip(Number(desde))
+        .limit(Number(limite))
+    ])
     res.json({
-        msg: 'get API - controlador',
-        
+     total,
+      usuarios
     });
 }
 
-const usuariosPost = (req, res) => {
-    const {nombre , edad}  = req.body;
+const usuariosPost = async (req, res) => {
+
+    const {nombre , correo, password , rol}  = req.body;
+    const usuario = new  Usuario({nombre , correo, password , rol});
+    
+
+    // encriptar contraseña
+    const salt = bcrytjs.genSaltSync();
+    usuario.password = bcrytjs.hashSync(password , salt);
+
+    //guardar db
+    await usuario.save();
+
     res.status(201).json({
-        msg: 'post API - controller',
-        nombre,
-        edad
+        usuario
     });
 }
 
 
-const usuariosPut = (req, res) => {
+const usuariosPut = async(req, res) => {
     const id = req.params.id;
-    res.json({
-        msg: 'put API - controller',
-        id
-    });
+    const {password , google,correo, _id, ...resto} = req.body
+
+    //TODO validar contra bd
+    if(password){
+            // encriptar contraseña
+    const salt = bcrytjs.genSaltSync();
+    resto.password = bcrytjs.hashSync(password , salt);
+    }
+
+    const usuario = await Usuario.findByIdAndUpdate(id, resto)
+
+    res.json(
+        usuario
+    );
 }
 
-const usuariosDelete =(req, res) => {
+const usuariosDelete = async(req, res) => {
+    const {id} = req.params;
+    
+    //fisicamente los borramos
+    //const usuario = await Usuario.findByIdAndDelete(id);
+
+    //cambiar status del usuario
+    const usuario = await Usuario.findByIdAndUpdate(id , {estado: false});
     res.json({
-        msg: 'delete API - controller'
+        usuario
     });
 }
 
