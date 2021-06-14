@@ -52,7 +52,6 @@ const usuariosPut = async(req, res) => {
     }
 
     const usuario = await Usuario.findByIdAndUpdate(id, resto)
-
     res.json(
         usuario
     );
@@ -60,15 +59,10 @@ const usuariosPut = async(req, res) => {
 
 const usuariosDelete = async(req, res) => {
     const {id} = req.params;
-    
-    //fisicamente los borramos
-    //const usuario = await Usuario.findByIdAndDelete(id);
 
     //cambiar status del usuario
     const usuario = await Usuario.findByIdAndUpdate(id , {estado: false});
-    res.json({
-        usuario
-    });
+    res.json(usuario);
 }
 
 
